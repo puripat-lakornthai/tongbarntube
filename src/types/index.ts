@@ -3,6 +3,7 @@ export interface Video {
   title?: string;
   thumbnail: string;
   url: string;
+  playlistId?: string;
   addedAt: number;
 }
 

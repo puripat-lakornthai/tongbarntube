@@ -35,6 +35,7 @@ export default function Index() {
       id: videoId,
       thumbnail: getVideoThumbnail(videoId),
       url: url.trim(),
+      playlistId: playlistId || undefined,
       addedAt: Date.now(),
     };
 
@@ -50,7 +51,11 @@ export default function Index() {
 
   const handlePlayFromHistory = (video: Video) => {
     addToHistory(video);
-    navigate(`/watch/${video.id}`);
+    if (video.playlistId) {
+      navigate(`/watch/${video.id}?list=${video.playlistId}`);
+    } else {
+      navigate(`/watch/${video.id}`);
+    }
   };
 
   const features = [

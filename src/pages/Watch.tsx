@@ -34,11 +34,12 @@ export default function Watch() {
   // Create current video object
   const currentPlayingVideo: Video | null = videoId
     ? {
-        id: videoId,
-        thumbnail: getVideoThumbnail(videoId),
-        url: `https://youtube.com/watch?v=${videoId}`,
-        addedAt: Date.now(),
-      }
+      id: videoId,
+      thumbnail: getVideoThumbnail(videoId),
+      url: `https://youtube.com/watch?v=${videoId}`,
+      playlistId: playlistId || undefined,
+      addedAt: Date.now(),
+    }
     : null;
 
   // Add to history on load
@@ -114,7 +115,11 @@ export default function Watch() {
                     compact
                     onPlay={() => {
                       addToHistory(item);
-                      navigate(`/watch/${item.id}`);
+                      if (item.playlistId) {
+                        navigate(`/watch/${item.id}?list=${item.playlistId}`);
+                      } else {
+                        navigate(`/watch/${item.id}`);
+                      }
                     }}
                   />
                 ))}
