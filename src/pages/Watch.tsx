@@ -66,6 +66,45 @@ export default function Watch() {
   // Ref to store playlist context when interrupted by Queue
   const resumePlaylistContext = useRef<{ list: string, index: number } | null>(null);
 
+  // "Sticky" Playlist Ref: Remembers the last active playlist even if URL momentarily drops it
+  const lastActivePlaylistId = useRef<string | null>(null);
+  useEffect(() => {
+    if (playlistId) lastActivePlaylistId.current = playlistId;
+  }, [playlistId]);
+
+  // SINGLE SOURCE OF TRUTH Helper
+  const getActivePlaylistId = useCallback(() => {
+    let listId = playlistId ||
+      resumePlaylistContext.current?.list ||
+      lastActivePlaylistId.current ||
+      playerControlRef.current?.getPlaylistId();
+
+    // 5. Fallback: Parse URL directly (in case React Router is delayed)
+    if (!listId) {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        listId = params.get('list') || undefined;
+      } catch (e) { }
+    }
+
+    return listId;
+  }, [playlistId]);
+
+  // CENTRALIZED NAVIGATION HELPER
+  const goToVideo = useCallback((id: string, replace = false, extraParams = '') => {
+    // Priority: Specific List (if provided externally?) - No, just use Global Context
+    // But sometimes we want to override? 
+    // Actually simplicity is best. Rely on getActivePlaylistId() which now includes Sticky Ref.
+    const list = getActivePlaylistId();
+    console.log('[Watch] standard navigation:', { id, list, replace, extraParams });
+
+    if (list) {
+      navigate(`/watch/${id}?list=${list}${extraParams}`, { replace });
+    } else {
+      navigate(`/watch/${id}${extraParams ? `?${extraParams.replace(/^&/, '')}` : ''}`, { replace });
+    }
+  }, [navigate, getActivePlaylistId]);
+
   const handleVideoEnd = useCallback(() => {
     // 1. Priority: Play from manual Queue
     if (queue.length > 0) {
@@ -82,8 +121,8 @@ export default function Watch() {
       if (nextFromQueue) {
         playerControlRef.current?.playVideo(nextFromQueue.id);
         addToHistory(nextFromQueue);
-        // Navigate to video (without list param, so we don't confuse the player)
-        navigate(`/watch/${nextFromQueue.id}`, { replace: true });
+        // Use unified helper
+        goToVideo(nextFromQueue.id, true);
       }
       return;
     }
@@ -93,42 +132,17 @@ export default function Watch() {
       const { list, index } = resumePlaylistContext.current;
       resumePlaylistContext.current = null; // Clear context after using
 
-      // Navigate back to the playlist, targeting the NEXT index
-      // We don't know the Video ID of the next song, but passing 'list' and relying on player might work?
-      // Actually, if we just navigate to any video with ?list=ID&index=..., YouTube player handles it.
-      // But we need a video ID to mount the route.
-      // Strategy: Navigate to the *Same* video ID we left off at? Or just use the list?
-      // If we don't have a video ID... maybe we can't easily resume without API data.
-      // Better Fallback: If we are already in the playlist mode? No, we navigated away.
+      // IMPORTANT: Update sticky ref so goToVideo picks it up
+      lastActivePlaylistId.current = list;
 
-      // Attempt: Navigate to the *Last Known Video* of the playlist, but with index+1?
-      // Or just navigate to the playlist URL (which might not work if route requires :videoId).
-
-      // Since we don't have the "Next Video ID", we will rely on YouTube's behavior.
-      // Let's stay on current video (last queue item) but add ?list=ID&index=... params?
-      // Then the player might auto-jump?
-
-      // Let's try: Navigate to the CURRENT video (just finished queue item), but add the list param back.
-      // Then call player.loadPlaylist?
-
-      // Simplest for now: Just restore the playlist param on the current video. 
-      // The user will see the playlist bar reappear. The player might restart the playlist or stay.
-      // Ideally we want next song. 
-
-      navigate(`/watch/${videoId}?list=${list}&index=${index + 1}`, { replace: true });
+      // Resume playlist at next index
+      goToVideo(videoId!, true, `&index=${index + 1}`);
       return;
     }
 
-    // 3. Normal Playlist Behavior (Native YouTube Autoplay handles this usually)
-    // If we are here, Queue is empty and we are NOT resuming.
-    // YouTube player will typically confirm "Ended" and stop, OR auto-advance if it's a playlist.
+    // 3. Normal Playlist Behavior ...
+  }, [queue, playNextFromQueue, addToHistory, goToVideo, playlistId, videoId, navigate]);
 
-  }, [queue, playNextFromQueue, addToHistory, navigate, playlistId, videoId]);
-
-  /* 
-     User requested: Keep "Add" button/input strictly for "Direct Play".
-     So this function now navigates immediately instead of queuing.
-  */
   const handleDirectPlay = useCallback((videoOrUrl: Video | string) => {
     let videoId: string | null = null;
     let listId: string | null = null;
@@ -136,52 +150,70 @@ export default function Watch() {
     if (typeof videoOrUrl === 'string') {
       const url = videoOrUrl.trim();
       if (!url) return;
-
-      // Use the same extraction utility as the player for consistency
       videoId = extractVideoId(url);
-
-      // Try to extract playlist ID from URL
       try {
         const urlObj = new URL(url);
         listId = urlObj.searchParams.get('list');
-      } catch (e) {
-        // Not a valid URL, might be just an ID - that's fine
-      }
+      } catch (e) { }
     } else {
       videoId = videoOrUrl.id;
       listId = videoOrUrl.playlistId || null;
     }
 
     if (videoId) {
+      // Create a temporary override? No, stick to the plan.
+      // If the input HAS a list, we should probably update the Sticky Ref?
       if (listId) {
-        navigate(`/watch/${videoId}?list=${listId}`);
-      } else {
-        navigate(`/watch/${videoId}`);
+        lastActivePlaylistId.current = listId;
       }
+      goToVideo(videoId);
     }
-  }, [navigate]);
+  }, [goToVideo]);
 
   const handlePlayFromQueue = useCallback((video: Video) => {
+    if (playlistId && !resumePlaylistContext.current) {
+      const currentIndex = playerControlRef.current?.getPlaylistIndex() ?? -1;
+      if (currentIndex >= 0) {
+        resumePlaylistContext.current = { list: playlistId, index: currentIndex };
+      }
+    }
+
     removeFromQueue(video.id);
     addToHistory(video);
+
     if (video.playlistId) {
-      navigate(`/watch/${video.id}?list=${video.playlistId}`);
-    } else {
-      navigate(`/watch/${video.id}`);
+      lastActivePlaylistId.current = video.playlistId;
     }
-  }, [removeFromQueue, addToHistory, navigate]);
+    goToVideo(video.id);
+  }, [removeFromQueue, addToHistory, goToVideo, playlistId]);
 
   const handlePlayerVideoPlay = useCallback((playedVideoId: string) => {
     // This is called when the YT player advances to a new video (playlist autoplay)
-    // We need to update the URL to match
     if (playedVideoId !== videoId) {
-      // ... existing logic ...
+      // CRITICAL: Queue Hijack
+      if (queue.length > 0) {
+        handleVideoEnd();
+        return;
+      }
+
+      const autoVideo: Video = {
+        id: playedVideoId,
+        thumbnail: getVideoThumbnail(playedVideoId),
+        url: `https://youtube.com/watch?v=${playedVideoId}`,
+        playlistId: playlistId || undefined,
+        addedAt: Date.now(),
+      };
+      addToHistory(autoVideo);
+
+      // SYNC PLAYER STATE TO STICKY REF
+      const listFromPlayer = playerControlRef.current?.getPlaylistId();
+      if (listFromPlayer) {
+        lastActivePlaylistId.current = listFromPlayer;
+      }
+
+      goToVideo(playedVideoId, true);
     }
-  }, [videoId, playlistId, addToHistory, navigate]); // Keeping this logic same as viewed file effectively
-
-  // ... (rest of effects) ...
-
-  // ... (render) ...
+  }, [videoId, playlistId, queue.length, handleVideoEnd, addToHistory, goToVideo]);
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden transition-colors duration-1000">
@@ -200,7 +232,7 @@ export default function Watch() {
           <div className="mb-4 opacity-0 animate-fade-in">
             <YouTubePlayer
               ref={playerControlRef}
-              key={playlistId || "player-instance"}
+              key="player-instance" // STATIC KEY to prevent remounting
               videoId={videoId}
               playlistId={playlistId}
               onVideoEnd={handleVideoEnd}
@@ -210,36 +242,7 @@ export default function Watch() {
               queueCount={queue.length}
               t={t}
               onColorChange={setDominantColor}
-              onVideoPlay={(id) => {
-                // Inline the existing logic for brevity or call the handler
-                // handlePlayerVideoPlay(id) is fine but ensuring we don't break existing
-                if (id !== videoId) {
-                  // CRITICAL FIX: If Queue has items, Playlist auto-advanced incorrectly.
-                  // We MUST hijack this and force the Queue logic.
-                  // 1. STOP the rogue player immediately.
-                  // 2. Force the "Play Queue" workflow.
-                  if (queue.length > 0) {
-                    // Force pause/stop to prevent audio leak of wrong song
-                    // We can't access internal player directly easily here without ref, 
-                    // but handleVideoEnd calls playVideo which will override it.
-                    // Ideally we would pause first: playerControlRef.current?.pauseVideo? 
-                    // But let's trust handleVideoEnd to load the new ID fast enough.
-                    handleVideoEnd();
-                    return;
-                  }
-
-                  const autoVideo: Video = {
-                    id,
-                    thumbnail: getVideoThumbnail(id),
-                    url: `https://youtube.com/watch?v=${id}`,
-                    playlistId: playlistId || undefined,
-                    addedAt: Date.now(),
-                  };
-                  addToHistory(autoVideo);
-                  if (playlistId) navigate(`/watch/${id}?list=${playlistId}`, { replace: true });
-                  else navigate(`/watch/${id}`, { replace: true });
-                }
-              }}
+              onVideoPlay={handlePlayerVideoPlay}
             />
           </div>
 
@@ -250,7 +253,7 @@ export default function Watch() {
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-4 gap-2">
                 {history
                   .filter((item) => item.id !== videoId)
-                  .slice(0, 16)
+                  .slice(0, 24)
                   .map((item) => (
                     <VideoCard
                       key={item.id}
@@ -258,12 +261,10 @@ export default function Watch() {
                       compact
                       onPlay={() => {
                         addToHistory(item);
-                        // Navigate directly to video ID to avoid playlist index resetting
                         if (item.playlistId) {
-                          navigate(`/watch/${item.id}?list=${item.playlistId}`);
-                        } else {
-                          navigate(`/watch/${item.id}`);
+                          lastActivePlaylistId.current = item.playlistId;
                         }
+                        goToVideo(item.id);
                       }}
                     />
                   ))}
@@ -283,6 +284,6 @@ export default function Watch() {
           t={t}
         />
       </div>
-    </div>
+    </div >
   );
 }

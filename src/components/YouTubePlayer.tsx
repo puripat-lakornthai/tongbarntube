@@ -19,6 +19,7 @@ declare global {
 export interface YouTubePlayerHandle {
   playVideo: (videoId: string) => void;
   getPlaylistIndex: () => number;
+  getPlaylistId: () => string | null;
 }
 
 interface YouTubePlayerProps {
@@ -60,6 +61,9 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
     },
     getPlaylistIndex: () => {
       return playerRef.current?.getPlaylistIndex() ?? -1;
+    },
+    getPlaylistId: () => {
+      return playerRef.current?.getPlaylistId() ?? null;
     }
   }));
 
@@ -202,7 +206,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
 
   // When videoId/playlistId changes externally, handle transitions intelligently
   useEffect(() => {
-    if (playerRef.current && playerRef.current.loadVideoById) {
+    if (playerRef.current) {
       const playlistChanged = playlistId !== prevPlaylistId.current;
       prevPlaylistId.current = playlistId;
 
@@ -212,13 +216,32 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
           list: playlistId,
         });
       } else if (videoId !== currentVideoId) {
-        // Case 2: Same Playlist (or no playlist), but New Video -> Just play video
-        // This prevents resetting to Index 0 when switching songs in the same list
-        // And it correctly handles Single Video -> URL change
-        playerRef.current.loadVideoById(videoId);
+        // Case 2: Same Playlist Context
+        // PROBLEM: loadVideoById() often strips the playlist UI/Context.
+        // SOLUTION: Try to find the video's index in the CURRENT playlist and jump to it.
+
+        // We only attempt this if we have a playlist active
+        let handled = false;
+
+        if (playlistId && typeof playerRef.current.getPlaylist === 'function') {
+          try {
+            const currentIds = playerRef.current.getPlaylist();
+            if (Array.isArray(currentIds)) {
+              const index = currentIds.indexOf(videoId);
+              if (index !== -1 && typeof playerRef.current.playVideoAt === 'function') {
+                // Found it! Use playlist navigation to keep UI intact
+                playerRef.current.playVideoAt(index);
+                handled = true;
+              }
+            }
+          } catch (e) { }
+        }
+
+        // Fallback: If not in list (or list check failed), load directly
+        if (!handled && playerRef.current.loadVideoById) {
+          playerRef.current.loadVideoById(videoId);
+        }
       }
-      // Note: If playlist changed to NULL, do we need to clear it?
-      // loadVideoById normally handles single video playback fine.
     }
   }, [videoId, playlistId, currentVideoId]);
 
