@@ -40,7 +40,7 @@ export const VideoCard = forwardRef<HTMLDivElement, VideoCardProps>(
         )}
       >
         {/* Thumbnail */}
-        <div 
+        <div
           className="relative aspect-video w-full overflow-hidden cursor-pointer"
           onClick={onPlay}
         >
@@ -50,10 +50,10 @@ export const VideoCard = forwardRef<HTMLDivElement, VideoCardProps>(
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={() => setImageError(true)}
           />
-          
+
           {/* Play Overlay */}
           <div className={cn(
-            "absolute inset-0 bg-foreground/40 flex items-center justify-center transition-opacity duration-200",
+            "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-200",
             "opacity-0 group-hover:opacity-100"
           )}>
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg">

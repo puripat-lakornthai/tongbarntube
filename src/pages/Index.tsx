@@ -77,7 +77,10 @@ export default function Index() {
   ];
 
   return (
-    <div className="min-h-screen gradient-hero">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background Glow Effect - Page Wide */}
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1000px] gradient-glow opacity-40 dark:opacity-60 animate-pulse-glow pointer-events-none -z-50" />
+
       <Navbar
         theme={theme}
         toggleTheme={toggleTheme}
@@ -89,7 +92,7 @@ export default function Index() {
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden">
         {/* Glow Effect */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] gradient-glow opacity-60 animate-pulse-glow pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[750px] gradient-glow opacity-60 animate-pulse-glow pointer-events-none" />
 
         <div className="container max-w-4xl mx-auto px-4 text-center relative z-10">
           {/* Logo */}
@@ -167,8 +170,12 @@ export default function Index() {
 
       {/* Recently Watched Section */}
       {history.length > 0 && (
-        <section className="py-16 px-4">
-          <div className="container max-w-6xl mx-auto">
+        <section className="relative py-16 px-4 overflow-hidden">
+          {/* Ambient Glow for Recently Watched - SCALABLE & EXPANDING */}
+          <div className="absolute inset-x-0 top-0 bottom-0 bg-[radial-gradient(ellipse_at_center,var(--primary)/0.15,transparent_60%)] dark:bg-[radial-gradient(ellipse_at_center,var(--primary)/0.3,transparent_70%)] blur-3xl pointer-events-none -z-10" />
+          <div className="absolute inset-x-0 top-0 bottom-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,var(--primary)/0.1_180deg,transparent_360deg)] opacity-40 dark:opacity-60 blur-[80px] pointer-events-none -z-10" />
+
+          <div className="container max-w-6xl mx-auto relative z-10">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <Clock className="w-6 h-6 text-primary" />
