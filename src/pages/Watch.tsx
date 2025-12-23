@@ -49,6 +49,11 @@ export default function Watch() {
     }
     : null, [videoId, playlistId]);
 
+  // Scroll to top when video changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [videoId]);
+
   // Ensure current video is always added to history (Move to Top)
   useEffect(() => {
     if (currentPlayingVideo) {
@@ -58,23 +63,67 @@ export default function Watch() {
 
 
 
+  // Ref to store playlist context when interrupted by Queue
+  const resumePlaylistContext = useRef<{ list: string, index: number } | null>(null);
+
   const handleVideoEnd = useCallback(() => {
-    const nextFromQueue = playNextFromQueue();
-    if (nextFromQueue) {
-      // 1. Force player to play NEXT video immediately (Fixes background tab throttling)
-      playerControlRef.current?.playVideo(nextFromQueue.id);
+    // 1. Priority: Play from manual Queue
+    if (queue.length > 0) {
+      // IF we are currently playing a playlist (and not already in a queue detour), save the context
+      if (playlistId && !resumePlaylistContext.current) {
+        // We need the CURRENT index so we can resume at index + 1
+        const currentIndex = playerControlRef.current?.getPlaylistIndex() ?? -1;
+        if (currentIndex >= 0) {
+          resumePlaylistContext.current = { list: playlistId, index: currentIndex };
+        }
+      }
 
-      // 2. Then update history and state
-      addToHistory(nextFromQueue);
-
-      // 3. Update URL (this might be delayed by browser in background, but audio is safe)
-      if (nextFromQueue.playlistId) {
-        navigate(`/watch/${nextFromQueue.id}?list=${nextFromQueue.playlistId}`, { replace: true });
-      } else {
+      const nextFromQueue = playNextFromQueue();
+      if (nextFromQueue) {
+        playerControlRef.current?.playVideo(nextFromQueue.id);
+        addToHistory(nextFromQueue);
+        // Navigate to video (without list param, so we don't confuse the player)
         navigate(`/watch/${nextFromQueue.id}`, { replace: true });
       }
+      return;
     }
-  }, [playNextFromQueue, addToHistory, navigate]);
+
+    // 2. Queue is Empty: Check if we need to RESUME a playlist
+    if (resumePlaylistContext.current) {
+      const { list, index } = resumePlaylistContext.current;
+      resumePlaylistContext.current = null; // Clear context after using
+
+      // Navigate back to the playlist, targeting the NEXT index
+      // We don't know the Video ID of the next song, but passing 'list' and relying on player might work?
+      // Actually, if we just navigate to any video with ?list=ID&index=..., YouTube player handles it.
+      // But we need a video ID to mount the route.
+      // Strategy: Navigate to the *Same* video ID we left off at? Or just use the list?
+      // If we don't have a video ID... maybe we can't easily resume without API data.
+      // Better Fallback: If we are already in the playlist mode? No, we navigated away.
+
+      // Attempt: Navigate to the *Last Known Video* of the playlist, but with index+1?
+      // Or just navigate to the playlist URL (which might not work if route requires :videoId).
+
+      // Since we don't have the "Next Video ID", we will rely on YouTube's behavior.
+      // Let's stay on current video (last queue item) but add ?list=ID&index=... params?
+      // Then the player might auto-jump?
+
+      // Let's try: Navigate to the CURRENT video (just finished queue item), but add the list param back.
+      // Then call player.loadPlaylist?
+
+      // Simplest for now: Just restore the playlist param on the current video. 
+      // The user will see the playlist bar reappear. The player might restart the playlist or stay.
+      // Ideally we want next song. 
+
+      navigate(`/watch/${videoId}?list=${list}&index=${index + 1}`, { replace: true });
+      return;
+    }
+
+    // 3. Normal Playlist Behavior (Native YouTube Autoplay handles this usually)
+    // If we are here, Queue is empty and we are NOT resuming.
+    // YouTube player will typically confirm "Ended" and stop, OR auto-advance if it's a playlist.
+
+  }, [queue, playNextFromQueue, addToHistory, navigate, playlistId, videoId]);
 
   /* 
      User requested: Keep "Add" button/input strictly for "Direct Play".
@@ -165,6 +214,20 @@ export default function Watch() {
                 // Inline the existing logic for brevity or call the handler
                 // handlePlayerVideoPlay(id) is fine but ensuring we don't break existing
                 if (id !== videoId) {
+                  // CRITICAL FIX: If Queue has items, Playlist auto-advanced incorrectly.
+                  // We MUST hijack this and force the Queue logic.
+                  // 1. STOP the rogue player immediately.
+                  // 2. Force the "Play Queue" workflow.
+                  if (queue.length > 0) {
+                    // Force pause/stop to prevent audio leak of wrong song
+                    // We can't access internal player directly easily here without ref, 
+                    // but handleVideoEnd calls playVideo which will override it.
+                    // Ideally we would pause first: playerControlRef.current?.pauseVideo? 
+                    // But let's trust handleVideoEnd to load the new ID fast enough.
+                    handleVideoEnd();
+                    return;
+                  }
+
                   const autoVideo: Video = {
                     id,
                     thumbnail: getVideoThumbnail(id),

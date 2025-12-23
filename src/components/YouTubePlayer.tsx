@@ -18,6 +18,7 @@ declare global {
 
 export interface YouTubePlayerHandle {
   playVideo: (videoId: string) => void;
+  getPlaylistIndex: () => number;
 }
 
 interface YouTubePlayerProps {
@@ -56,12 +57,15 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
         // Optimistically update internal state to prevent "flash" of old ID
         setCurrentVideoId(newVideoId);
       }
+    },
+    getPlaylistIndex: () => {
+      return playerRef.current?.getPlaylistIndex() ?? -1;
     }
   }));
 
-  // State to track the ACTUAL playing video (syncs with internal player)
-  const [currentVideoId, setCurrentVideoId] = useState(videoId);
-
+  // State to track the ACTUAL playing video (syncs with internal  /* State */
+  const [currentVideoId, setCurrentVideoId] = useState<string>(videoId || '');
+  const [isPlaying, setIsPlaying] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
   const [dominantColor, setDominantColor] = useState<string>('');
   const [showAddInput, setShowAddInput] = useState(false); // For Queue
@@ -80,12 +84,47 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
     }
   }, [videoId, currentVideoId]);
 
+  // Preemptive Queue Interceptor:
+  // If we let the video reach natural "END", the YouTube Playlist logic often fires before our React state can intercept.
+  // Solution: We poll near the end and "High Over" (Hijack) manually just before it finishes.
+  useEffect(() => {
+    if (!isPlaying || queueCount === 0) return;
+
+    const intervalId = setInterval(() => {
+      if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
+        const currentTime = playerRef.current.getCurrentTime();
+        const duration = playerRef.current.getDuration();
+
+        // If within 0.3s of end (and valid duration)
+        if (duration > 0 && (duration - currentTime) < 0.3) {
+          // 1. Force Pause to stop Playlist Auto-advance
+          playerRef.current.pauseVideo();
+          clearInterval(intervalId);
+
+          // 2. Manually trigger our End logic
+          // We use a timeout to break the stack and ensure pause takes effect
+          setTimeout(() => {
+            onVideoEnd();
+          }, 0);
+        }
+      }
+    }, 100); // Check every 100ms
+
+    return () => clearInterval(intervalId);
+  }, [isPlaying, queueCount, onVideoEnd]);
+
+
+  // Track props with refs to access fresh values inside closures (event handlers)
+  const onVideoEndRef = useRef(onVideoEnd);
+  const onVideoPlayRef = useRef(onVideoPlay);
+
+  useEffect(() => {
+    onVideoEndRef.current = onVideoEnd;
+    onVideoPlayRef.current = onVideoPlay;
+  }, [onVideoEnd, onVideoPlay]);
+
   // Initialize YouTube Player ONCE
   useEffect(() => {
-    // ... (keep init logic same, but maybe update ref)
-    // Actually init logic is fine.
-    // We just need to ensure on subsequent updates we handle it right.
-
     // Load YouTube IFrame Player API code asynchronously
     if (!window.YT) {
       const tag = document.createElement('script');
@@ -118,28 +157,40 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
             // ...
           },
           onStateChange: (event: any) => {
-            if (playerRef.current && typeof playerRef.current.getVideoData === 'function') {
-              const data = playerRef.current.getVideoData();
-              const playingId = data?.video_id;
-              if (playingId && playingId !== currentVideoId) {
-                setCurrentVideoId(playingId);
-                onVideoPlay?.(playingId);
+            // Sync internal state
+            setIsPlaying(event.data === window.YT.PlayerState.PLAYING);
+
+            if (event.data === window.YT.PlayerState.ENDED) {
+              // Verify we haven't already moved on (race condition check)
+              if (onVideoEndRef.current) onVideoEndRef.current();
+            } else if (event.data === window.YT.PlayerState.PLAYING) {
+              // If the player starts playing a NEW video ID automatically (playlist auto-advance)
+              // We need to notify the parent to update URL/History
+              const playerVideoId = event.target.getVideoData().video_id;
+              // Use a ref or just call the prop if stable
+              if (onVideoPlayRef.current) {
+                onVideoPlayRef.current(playerVideoId);
               }
             }
-            if (event.data === 0) {
-              onVideoEnd?.();
-            }
-          }
+          },
         }
       };
 
       playerRef.current = new window.YT.Player(containerRef.current, playerOptions);
     };
 
+    // This function will be called by the YouTube IFrame API once it's ready
+    window.onYouTubeIframeAPIReady = () => {
+      try {
+        initPlayer();
+      } catch (e) { console.error(e); }
+    };
+
+    // If API is already loaded (e.g., hot reload), call initPlayer directly
     if (window.YT && window.YT.Player) {
-      initPlayer();
-    } else {
-      window.onYouTubeIframeAPIReady = initPlayer;
+      try {
+        initPlayer();
+      } catch (e) { console.error(e); }
     }
 
     return () => {
