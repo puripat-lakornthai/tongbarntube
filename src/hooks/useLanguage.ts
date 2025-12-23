@@ -7,7 +7,7 @@ export const translations = {
     // App
     appName: 'TongbarnTube',
     tagline: 'Distraction-free YouTube watching',
-    
+
     // Home
     pasteUrl: 'Paste YouTube URL...',
     watch: 'Watch',
@@ -17,7 +17,7 @@ export const translations = {
     clearHistory: 'Clear History',
     viewAll: 'View All',
     createPlaylist: 'Create Playlist',
-    
+
     // Features
     playlistsTitle: 'Playlists',
     playlistsDesc: 'Create and manage your video collections',
@@ -27,14 +27,14 @@ export const translations = {
     themeDesc: 'Switch between light and dark mode',
     noAdsTitle: 'No Distractions',
     noAdsDesc: 'Clean interface, focused viewing',
-    
+
     // Player
     nowPlaying: 'Now Playing',
     addToQueue: 'Add to Queue',
     queue: 'Queue',
     playlists: 'Playlists',
     playlistInfo: 'Playlist:',
-    
+
     // Playlist
     newPlaylistName: 'New playlist name...',
     noPlaylists: 'No playlists yet',
@@ -47,7 +47,7 @@ export const translations = {
     addVideo: 'Add Video',
     importPlaylist: 'Import YouTube Playlist',
     playing: 'Playing',
-    
+
     // Queue
     playQueue: 'Play Queue',
     clearQueue: 'Clear All',
@@ -55,7 +55,7 @@ export const translations = {
     queueEmpty: 'Queue is empty',
     addVideosQueue: 'Add videos to play next',
     playlist: 'Playlist',
-    
+
     // Actions
     cancel: 'Cancel',
     save: 'Save',
@@ -63,10 +63,16 @@ export const translations = {
     edit: 'Edit',
     add: 'Add',
     play: 'Play',
+    playVideo: 'Play',
+    directPlay: 'Direct Play',
+    pasteVideoUrl: 'Paste YouTube URL to play...',
+    pasteVideoUrlDirectly: 'Paste YouTube URL to play directly...',
+    copyUrl: 'Copy URL',
+    copied: 'Copied!',
     remove: 'Remove',
     clear: 'Clear',
     home: 'Home',
-    
+
     // Messages
     invalidUrl: 'Invalid URL',
     invalidUrlDesc: 'Please enter a valid YouTube URL',
@@ -84,7 +90,7 @@ export const translations = {
     // App
     appName: 'TongbarnTube',
     tagline: 'ดู YouTube แบบไม่มีสิ่งรบกวน',
-    
+
     // Home
     pasteUrl: 'วาง URL YouTube...',
     watch: 'ดู',
@@ -94,7 +100,7 @@ export const translations = {
     clearHistory: 'ล้างประวัติ',
     viewAll: 'ดูทั้งหมด',
     createPlaylist: 'สร้างเพลย์ลิสต์',
-    
+
     // Features
     playlistsTitle: 'เพลย์ลิสต์',
     playlistsDesc: 'สร้างและจัดการคอลเลกชันวิดีโอ',
@@ -104,14 +110,14 @@ export const translations = {
     themeDesc: 'เปลี่ยนระหว่างโหมดสว่างและมืด',
     noAdsTitle: 'ไม่มีสิ่งรบกวน',
     noAdsDesc: 'อินเทอร์เฟซที่สะอาด มุ่งเน้นการดู',
-    
+
     // Player
     nowPlaying: 'กำลังเล่น',
     addToQueue: 'เพิ่มในคิว',
     queue: 'คิว',
     playlists: 'เพลย์ลิสต์',
     playlistInfo: 'เพลย์ลิสต์:',
-    
+
     // Playlist
     newPlaylistName: 'ชื่อเพลย์ลิสต์ใหม่...',
     noPlaylists: 'ยังไม่มีเพลย์ลิสต์',
@@ -124,7 +130,7 @@ export const translations = {
     addVideo: 'เพิ่มวิดีโอ',
     importPlaylist: 'นำเข้าเพลย์ลิสต์ YouTube',
     playing: 'กำลังเล่น',
-    
+
     // Queue
     playQueue: 'คิวเล่น',
     clearQueue: 'ล้างทั้งหมด',
@@ -132,7 +138,7 @@ export const translations = {
     queueEmpty: 'คิวว่างเปล่า',
     addVideosQueue: 'เพิ่มวิดีโอเพื่อเล่นต่อไป',
     playlist: 'เพลย์ลิสต์',
-    
+
     // Actions
     cancel: 'ยกเลิก',
     save: 'บันทึก',
@@ -140,10 +146,16 @@ export const translations = {
     edit: 'แก้ไข',
     add: 'เพิ่ม',
     play: 'เล่น',
+    playVideo: 'เล่น',
+    directPlay: 'เล่นทันที',
+    pasteVideoUrl: 'วาง URL YouTube เพื่อเล่น...',
+    pasteVideoUrlDirectly: 'วาง URL YouTube เพื่อเพิ่มในคิว...',
+    copyUrl: 'คัดลอก URL',
+    copied: 'คัดลอกแล้ว!',
     remove: 'ลบ',
     clear: 'ล้าง',
     home: 'หน้าแรก',
-    
+
     // Messages
     invalidUrl: 'URL ไม่ถูกต้อง',
     invalidUrlDesc: 'กรุณาใส่ URL YouTube ที่ถูกต้อง',

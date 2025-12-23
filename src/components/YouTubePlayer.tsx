@@ -299,12 +299,12 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
             size="icon"
             onClick={handleCopyUrl}
             className="relative h-7 w-7"
-            title="Copy URL"
+            title={t('copyUrl')}
           >
             <Copy className="w-3.5 h-3.5" />
             {showCopied && (
               <span className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-1 bg-foreground text-background text-xs rounded whitespace-nowrap animate-fade-in">
-                Copied!
+                {t('copied')}
               </span>
             )}
           </Button>
@@ -318,7 +318,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
             setShowDirectPlayInput(!showDirectPlayInput);
             setShowAddInput(false);
           }}
-          title="Direct Play"
+          title={t('directPlay')}
           className="h-8 w-8"
         >
           <Play className="w-4 h-4 fill-current" />
@@ -362,7 +362,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
         <div className="mt-3 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
           <div className="relative flex-1">
             <Input
-              placeholder="Paste YouTube URL to play..."
+              placeholder={t('pasteVideoUrl')}
               value={directPlayUrl}
               onChange={(e) => setDirectPlayUrl(e.target.value)}
               onKeyDown={(e) => {
@@ -393,7 +393,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
             }}
             disabled={!directPlayUrl.trim()}
           >
-            Play
+            {t('playVideo')}
             <Play className="w-4 h-4 fill-current ml-2" />
           </Button>
         </div>
@@ -404,7 +404,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
         <div className="mt-3 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
           <div className="relative flex-1">
             <Input
-              placeholder="Paste YouTube URL to play directly..."
+              placeholder={t('pasteVideoUrlDirectly')}
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddToQueue()}
@@ -423,7 +423,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
             onClick={handleAddToQueue}
             disabled={!urlInput.trim()}
           >
-            Play
+            {t('playVideo')}
             <Play className="w-4 h-4 fill-current ml-2" />
           </Button>
         </div>
