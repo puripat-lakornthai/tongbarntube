@@ -240,7 +240,7 @@ export default function Watch() {
               videoId={videoId}
               playlistId={playlistId}
               onVideoEnd={handleVideoEnd}
-              onOpenQueue={() => setIsQueueOpen(true)}
+              onOpenQueue={() => setIsQueueOpen(prev => !prev)}
               onAddToQueue={addToQueue}
               onDirectPlay={handleDirectPlay}
               queueCount={queue.length}
