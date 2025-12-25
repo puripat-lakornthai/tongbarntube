@@ -78,8 +78,7 @@ export default function Index() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background Glow Effect - Page Wide */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1000px] gradient-glow opacity-40 dark:opacity-60 animate-pulse-glow pointer-events-none -z-50" />
+
 
       <Navbar
         theme={theme}
@@ -87,38 +86,35 @@ export default function Index() {
         language={language}
         toggleLanguage={toggleLanguage}
         t={t}
+        alwaysShow // Force navbar to always show
       />
 
+      {/* Global Background Effects (Moved out of Hero for seamless light mode) */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-[-20%] left-[-20%] w-[90vw] h-[90vw] rounded-full bg-primary/10 blur-[180px] mix-blend-screen" />
+        <div className="absolute bottom-[-20%] right-[-20%] w-[90vw] h-[90vw] rounded-full bg-blue-500/10 blur-[180px] mix-blend-screen" />
+        <div className="absolute inset-0 bg-playful-light opacity-60" />
+      </div>
+
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
-        {/* Glow Effect */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[750px] gradient-glow opacity-60 animate-pulse-glow pointer-events-none" />
+      <section className="relative pt-32 pb-24 md:pt-48 md:pb-32 px-4">
 
-        <div className="container max-w-4xl mx-auto px-4 text-center relative z-10">
-          {/* Logo */}
-          <div className="inline-flex items-center justify-center mb-8 opacity-0 animate-fade-in">
-            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-xl shadow-primary/30">
-              <Play className="w-8 h-8 text-primary-foreground fill-primary-foreground ml-1" />
-            </div>
-          </div>
+        <div className="container max-w-4xl mx-auto text-center relative z-10">
 
-          {/* Title */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 opacity-0 animate-fade-in stagger-1">
+          <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-8 text-balance">
             Tongbarn<span className="text-gradient">Tube</span>
           </h1>
 
-          {/* Tagline */}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 opacity-0 animate-fade-in stagger-2">
+          <p className="text-xl md:text-2xl text-muted-foreground/80 mb-16 max-w-2xl mx-auto font-light tracking-wide">
             {t('tagline')}
           </p>
 
-          {/* URL Input */}
           <form
             onSubmit={handleSubmit}
-            className="max-w-xl mx-auto mb-8 opacity-0 animate-fade-in-up stagger-3"
+            className="max-w-xl mx-auto mb-12"
           >
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1 relative">
+            <div className="relative group">
+              <div className="relative flex items-center bg-card/50 backdrop-blur-xl border border-white/10 rounded-2xl p-2 transition-all duration-300 focus-within:ring-1 focus-within:ring-primary/20 focus-within:bg-card/80">
                 <Input
                   type="text"
                   placeholder={t('pasteUrl')}
@@ -127,71 +123,71 @@ export default function Index() {
                     setUrl(e.target.value);
                     setError('');
                   }}
-                  className="h-14 text-lg pl-5 pr-5 rounded-xl shadow-soft"
+                  className="h-14 border-0 bg-transparent shadow-none focus-visible:ring-0 text-lg px-6 placeholder:text-muted-foreground/40 font-light"
                 />
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="rounded-xl px-8 h-12 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300"
+                >
+                  <Play className="w-5 h-5 fill-current" />
+                </Button>
               </div>
-              <Button
-                type="submit"
-                variant="hero"
-                size="xl"
-                className="rounded-xl"
-              >
-                <Play className="w-5 h-5 fill-current" />
-                {t('watch')}
-              </Button>
             </div>
             {error && (
-              <p className="text-destructive text-sm mt-2">{error}</p>
+              <p className="text-red-500/80 text-sm mt-4 font-medium animate-fade-in">{error}</p>
             )}
           </form>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-16 px-4">
+      <section className="py-32 px-4">
         <div className="container max-w-6xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-12 opacity-0 animate-fade-in">
-            <Sparkles className="inline-block w-6 h-6 mr-2 text-primary" />
-            {t('features')}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center mb-24">
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 flex items-center justify-center gap-3">
+              <Sparkles className="w-8 h-8 text-primary" />
+              {t('features')}
+            </h2>
+            <div className="h-1 w-24 bg-gradient-to-r from-transparent via-primary/40 to-transparent mx-auto rounded-full" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
             {features.map((feature, index) => (
               <FeatureCard
                 key={feature.title}
                 icon={feature.icon}
                 title={feature.title}
                 description={feature.description}
-                delay={100 + index * 100}
+                delay={200 + index * 100}
               />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Recently Watched Section */}
+      {/* Recently Watched - Minimal */}
       {history.length > 0 && (
-        <section className="relative py-16 px-4 overflow-hidden">
-          {/* Ambient Glow for Recently Watched - SCALABLE & EXPANDING */}
-          <div className="absolute inset-x-0 top-0 bottom-0 bg-[radial-gradient(ellipse_at_center,var(--primary)/0.15,transparent_60%)] dark:bg-[radial-gradient(ellipse_at_center,var(--primary)/0.3,transparent_70%)] blur-3xl pointer-events-none -z-10" />
-          <div className="absolute inset-x-0 top-0 bottom-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,var(--primary)/0.1_180deg,transparent_360deg)] opacity-40 dark:opacity-60 blur-[80px] pointer-events-none -z-10" />
-
-          <div className="container max-w-6xl mx-auto relative z-10">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold flex items-center gap-2">
+        <section className="pb-32 px-4">
+          <div className="container max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-12 border-b border-border/20 pb-6">
+              <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
                 <Clock className="w-6 h-6 text-primary" />
                 {t('recentlyWatched')}
               </h2>
-              <Button variant="ghost" onClick={clearHistory}>
-                <Trash2 className="w-4 h-4 mr-1" />
+              <Button
+                variant="ghost"
+                onClick={clearHistory}
+                className="text-muted-foreground hover:text-destructive transition-colors"
+                size="sm"
+              >
                 {t('clearHistory')}
               </Button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {history.slice(0, 21).map((item, index) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {history.slice(0, 12).map((item, index) => (
                 <div
                   key={item.id}
-                  className="opacity-0 animate-fade-in"
-                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <VideoCard
                     video={item}
@@ -206,7 +202,6 @@ export default function Index() {
         </section>
       )}
 
-      {/* Footer */}
       {/* Footer */}
       <footer className="relative mt-20 border-t border-border/40 overflow-hidden">
         {/* background layers */}
