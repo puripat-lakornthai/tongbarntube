@@ -169,7 +169,7 @@ export default function Index() {
       {/* Recently Watched - Minimal */}
       {history.length > 0 && (
         <section className="pb-32 px-4">
-          <div className="container max-w-7xl mx-auto">
+          <div className="mx-auto w-full max-w-[1800px] px-6">
             <div className="flex items-center justify-between mb-12 border-b border-border/20 pb-6">
               <h2 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
                 <Clock className="w-6 h-6 text-primary" />
@@ -184,7 +184,7 @@ export default function Index() {
                 {t('clearHistory')}
               </Button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {history.slice(0, 20).map((item, index) => (
                 <div
                   key={item.id}
