@@ -232,7 +232,7 @@ export default function Watch() {
 
         <main className={cn(
           "transition-all duration-700 ease-in-out mx-auto flex flex-col items-center",
-          theaterMode ? "w-[98vw] pt-4 pb-4" : "container px-4 max-w-6xl py-6"
+          theaterMode ? "w-[98vw] pt-2 pb-4" : "container px-4 max-w-6xl py-2"
         )}>
           {/* Player */}
           <div
