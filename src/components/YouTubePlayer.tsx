@@ -366,10 +366,10 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
       </div>
 
       {/* Compact URL bar */}
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-6 flex items-center gap-2">
         {/* Thumbnail + Copy */}
-        <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-card/80 backdrop-blur-xl border border-border/50">
-          <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0 bg-muted">
+        <div className="flex items-center gap-2 pr-2 pl-1.5 h-10 rounded-xl bg-card/80 backdrop-blur-xl border border-border/50">
+          <div className="w-7 h-7 rounded-md overflow-hidden flex-shrink-0 bg-muted">
             <img
               src={getVideoThumbnail(currentVideoId, 'default')}
               alt=""
@@ -414,7 +414,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
                 duration: 2000,
               });
             }}
-            className="relative h-7 w-7"
+            className="relative h-8 w-8 rounded-lg hover:bg-white/10"
             title={t('copyUrl')}
           >
             <Copy className="w-3.5 h-3.5" />

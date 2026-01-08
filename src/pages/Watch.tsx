@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Play, Plus, X } from 'lucide-react';
+import { Play, Plus, X, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { YouTubePlayer, YouTubePlayerHandle } from '@/components/YouTubePlayer';
@@ -22,7 +22,7 @@ export default function Watch() {
   const playlistId = searchParams.get('list');
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { history, addToHistory, removeFromHistory } = useHistory();
+  const { history, addToHistory, removeFromHistory, clearHistory } = useHistory();
   const { language, toggleLanguage, t } = useLanguage();
   const {
     queue,
@@ -268,8 +268,21 @@ export default function Watch() {
 
           {/* Recent History */}
           {history.length > 1 && (
-            <section className="opacity-0 animate-fade-in stagger-2 mt-8">
-              <h2 className="text-lg font-semibold mb-4">{t('recentlyWatched')}</h2>
+            <section className="opacity-0 animate-fade-in stagger-2 mt-8 mb-12">
+              <div className="flex items-center justify-between mb-6 border-b border-border/20 pb-4">
+                <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-primary" />
+                  {t('recentlyWatched')}
+                </h2>
+                <Button
+                  variant="destructive"
+                  onClick={clearHistory}
+                  className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:scale-105 active:scale-95 h-8 text-xs px-3"
+                  size="sm"
+                >
+                  {t('clearHistory')}
+                </Button>
+              </div>
               <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-4 gap-2">
                 {history
                   .filter((item) => item.id !== videoId)
