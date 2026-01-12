@@ -93,12 +93,12 @@ export default function Watch() {
   }, [playlistId]);
 
   // CENTRALIZED NAVIGATION HELPER
-  const goToVideo = useCallback((id: string, replace = false, extraParams = '') => {
-    // Priority: Specific List (if provided externally?) - No, just use Global Context
-    // But sometimes we want to override? 
-    // Actually simplicity is best. Rely on getActivePlaylistId() which now includes Sticky Ref.
-    const list = getActivePlaylistId();
-    console.log('[Watch] standard navigation:', { id, list, replace, extraParams });
+  const goToVideo = useCallback((id: string, replace = false, extraParams = '', overrideListId?: string | null) => {
+    // If overrideListId is provided (string or null), use it.
+    // If it's undefined, fall back to "smart" detection (sticky ref / current URL).
+    const list = overrideListId !== undefined ? overrideListId : getActivePlaylistId();
+
+    console.log('[Watch] standard navigation:', { id, list, replace, extraParams, overrideListId });
 
     if (list) {
       navigate(`/watch/${id}?list=${list}${extraParams}`, { replace });
@@ -123,8 +123,17 @@ export default function Watch() {
       if (nextFromQueue) {
         playerControlRef.current?.playVideo(nextFromQueue.id);
         addToHistory(nextFromQueue);
-        // Use unified helper
-        goToVideo(nextFromQueue.id, true);
+
+        // FIX: Update sticky playlist ref for auto-play (same logic as Play Now / Manual Queue)
+        const nextListId = nextFromQueue.playlistId || null;
+        if (nextListId) {
+          lastActivePlaylistId.current = nextListId;
+        } else {
+          lastActivePlaylistId.current = null;
+        }
+
+        // Use unified helper with explicit override
+        goToVideo(nextFromQueue.id, true, '', nextListId);
       }
       return;
     }
@@ -146,31 +155,41 @@ export default function Watch() {
   }, [queue, playNextFromQueue, addToHistory, goToVideo, playlistId, videoId, navigate]);
 
   const handleDirectPlay = useCallback((videoOrUrl: Video | string) => {
-    let videoId: string | null = null;
-    let listId: string | null = null;
+    let targetVideoId: string | null = null;
+    let targetListId: string | null = null;
 
     if (typeof videoOrUrl === 'string') {
       const url = videoOrUrl.trim();
       if (!url) return;
-      videoId = extractVideoId(url);
-      try {
-        const urlObj = new URL(url);
-        listId = urlObj.searchParams.get('list');
-      } catch (e) { }
+      targetVideoId = extractVideoId(url);
+      targetListId = extractPlaylistId(url);
+
+      // Fallback: Try URL object directly if regex returned nothing
+      if (!targetListId) {
+        try {
+          const u = new URL(url);
+          targetListId = u.searchParams.get('list');
+        } catch (e) { }
+      }
     } else {
-      videoId = videoOrUrl.id;
-      listId = videoOrUrl.playlistId || null;
+      targetVideoId = videoOrUrl.id;
+      targetListId = videoOrUrl.playlistId || null;
     }
 
-    if (videoId) {
-      // Create a temporary override? No, stick to the plan.
-      // If the input HAS a list, we should probably update the Sticky Ref?
-      if (listId) {
-        lastActivePlaylistId.current = listId;
+    if (targetVideoId) {
+      if (targetListId) {
+        // STRICT PRIORITY: If input has a list, use it. Override sticky ref.
+        lastActivePlaylistId.current = targetListId;
+        // Pass explicit listId
+        goToVideo(targetVideoId, false, '', targetListId);
+      } else {
+        // NEW FIX: If input has NO list, we must CLEAR the sticky ref.
+        lastActivePlaylistId.current = null;
+        // Pass explicit NULL to clear playlist
+        goToVideo(targetVideoId, false, '', null);
       }
-      goToVideo(videoId);
     }
-  }, [goToVideo]);
+  }, [goToVideo, navigate]);
 
   const handlePlayFromQueue = useCallback((video: Video) => {
     if (playlistId && !resumePlaylistContext.current) {
@@ -183,10 +202,11 @@ export default function Watch() {
     removeFromQueue(video.id);
     addToHistory(video);
 
-    if (video.playlistId) {
-      lastActivePlaylistId.current = video.playlistId;
-    }
-    goToVideo(video.id);
+    const targetListId = video.playlistId || null;
+    lastActivePlaylistId.current = targetListId;
+
+    // Pass explicit targetListId (string or null)
+    goToVideo(video.id, false, '', targetListId);
   }, [removeFromQueue, addToHistory, goToVideo, playlistId]);
 
   const handlePlayerVideoPlay = useCallback((playedVideoId: string) => {
@@ -250,8 +270,8 @@ export default function Watch() {
           >
             <YouTubePlayer
               ref={playerControlRef}
-              key="player-instance" // STATIC KEY to prevent remounting
-              videoId={videoId}
+              key={`${playlistId || "no-playlist"}-${videoId}`} // FORCE REMOUNT on ANY video change matches strict user requirement
+              videoId={videoId!}
               playlistId={playlistId}
               onVideoEnd={handleVideoEnd}
               onOpenQueue={() => setIsQueueOpen(prev => !prev)}
@@ -294,10 +314,9 @@ export default function Watch() {
                       compact
                       onPlay={() => {
                         addToHistory(item);
-                        if (item.playlistId) {
-                          lastActivePlaylistId.current = item.playlistId;
-                        }
-                        goToVideo(item.id);
+                        const listId = item.playlistId || null;
+                        lastActivePlaylistId.current = listId; // Keep ref in sync for other components
+                        goToVideo(item.id, false, '', listId);
                       }}
                       showRemove
                       onRemove={() => removeFromHistory(item.id)}

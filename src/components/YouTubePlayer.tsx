@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHand
 import { Copy, ListEnd, Play, Plus, X, Check, Maximize, Minimize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getVideoThumbnail, extractVideoId } from '@/utils/youtube';
+import { getVideoThumbnail, extractVideoId, extractPlaylistId } from '@/utils/youtube';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import type { Video } from '@/types';
@@ -321,6 +321,7 @@ export const YouTubePlayer = forwardRef<YouTubePlayerHandle, YouTubePlayerProps>
       id: extractedId,
       thumbnail: getVideoThumbnail(extractedId),
       url: urlInput.trim(),
+      playlistId: extractPlaylistId(urlInput) || undefined,
       addedAt: Date.now(),
     };
 
