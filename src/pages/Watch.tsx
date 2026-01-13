@@ -252,7 +252,7 @@ export default function Watch() {
 
         <main className={cn(
           "transition-all duration-700 ease-in-out mx-auto flex flex-col items-center",
-          theaterMode ? "w-[98vw] pt-2 pb-4" : "container px-4 max-w-6xl py-2"
+          theaterMode ? "w-[98vw] pt-2 pb-4" : "container px-4 max-w-7xl py-12"
         )}>
           {/* Player */}
           <div
@@ -303,7 +303,7 @@ export default function Watch() {
                   {t('clearHistory')}
                 </Button>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 {history
                   .filter((item) => item.id !== videoId)
                   .slice(0, 24)

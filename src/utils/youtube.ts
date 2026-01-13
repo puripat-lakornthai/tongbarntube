@@ -1,6 +1,6 @@
 export function extractVideoId(url: string): string | null {
   if (!url) return null;
-  
+
   const patterns = [
     // Standard watch URL
     /(?:youtube\.com\/watch\?v=|youtube\.com\/watch\?.+&v=)([a-zA-Z0-9_-]{11})/,
@@ -45,12 +45,12 @@ export function getEmbedUrl(videoId: string, playlistId?: string | null): string
     rel: '0',
     modestbranding: '1',
   });
-  
+
   if (playlistId) {
     params.set('listType', 'playlist');
     params.set('list', playlistId);
   }
-  
+
   return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
 }
 
