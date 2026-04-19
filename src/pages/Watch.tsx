@@ -291,7 +291,7 @@ export default function Watch() {
 
           {/* Recent History */}
           {history.length > 1 && (
-            <section className="opacity-0 animate-fade-in stagger-2 mt-8 mb-12">
+            <section className="opacity-0 animate-fade-in stagger-2 mt-14 mb-12">
               <div className="flex items-center justify-between mb-6 border-b border-border/20 pb-4">
                 <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
                   <Clock className="w-5 h-5 text-primary" />
