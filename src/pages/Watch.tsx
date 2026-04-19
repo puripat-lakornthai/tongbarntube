@@ -327,7 +327,7 @@ export default function Watch() {
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 relative z-10">
                 {history
                   .filter((item) => item.id !== videoId)
-                  .slice(0, 24)
+                  .slice(0, 25)
                   .map((item, index) => (
                     <div 
                       key={item.id} 
