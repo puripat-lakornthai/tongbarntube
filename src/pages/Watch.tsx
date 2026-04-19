@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Play, Plus, X, Clock } from 'lucide-react';
+import { Play, Plus, X, Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { YouTubePlayer, YouTubePlayerHandle } from '@/components/YouTubePlayer';
@@ -291,39 +291,62 @@ export default function Watch() {
 
           {/* Recent History */}
           {history.length > 1 && (
-            <section className="opacity-0 animate-fade-in stagger-2 mt-14 mb-12">
-              <div className="flex items-center justify-between mb-6 border-b border-border/20 pb-4">
-                <h2 className="text-xl font-semibold tracking-tight flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-primary" />
-                  {t('recentlyWatched')}
-                </h2>
+            <section className="opacity-0 animate-fade-in stagger-2 mt-20 mb-12 relative w-full rounded-3xl p-6 sm:p-8 overflow-hidden bg-card/40 dark:bg-white/[0.03] backdrop-blur-md border border-border/40 dark:border-white/10 shadow-xl dark:shadow-2xl">
+              {/* Premium Background Effects */}
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-transparent -z-10" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+              
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pb-6 border-b border-border/30 dark:border-white/10 relative z-10">
+                <div className="flex items-center gap-4 mb-4 sm:mb-0">
+                  <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/30 shadow-[0_0_20px_rgba(var(--primary),0.2)] transition-all duration-500 group-hover:shadow-[0_0_30px_rgba(var(--primary),0.4)]">
+                    <Clock className="w-6 h-6 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.6)] animate-pulse-slow" />
+                    <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/20 mix-blend-overlay"></div>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70 drop-shadow-sm">
+                      {t('recentlyWatched')}
+                    </h2>
+                  </div>
+                </div>
+                
                 <Button
-                  variant="destructive"
+                  variant="ghost"
                   onClick={clearHistory}
-                  className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:scale-105 active:scale-95 h-8 text-xs px-3"
-                  size="sm"
+                  className="group relative overflow-hidden rounded-xl h-10 px-6 bg-red-500/10 dark:bg-red-500/15 hover:bg-transparent text-red-600 dark:text-red-400 hover:text-white transition-all duration-500 border border-red-500/30 hover:border-transparent shadow-[0_0_15px_rgba(239,68,68,0.1)] hover:shadow-[0_0_30px_rgba(239,68,68,0.5)]"
                 >
-                  {t('clearHistory')}
+                  {/* Subtle pulsing background glow on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-0" />
+                  
+                  <span className="relative z-10 flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.2em]">
+                    <Trash2 className="w-4 h-4 group-hover:-rotate-12 group-hover:scale-110 transition-all duration-300" />
+                    {t('clearHistory')}
+                  </span>
                 </Button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 relative z-10">
                 {history
                   .filter((item) => item.id !== videoId)
                   .slice(0, 24)
-                  .map((item) => (
-                    <VideoCard
-                      key={item.id}
-                      video={item}
-                      compact
-                      onPlay={() => {
-                        addToHistory(item);
-                        const listId = item.playlistId || null;
-                        lastActivePlaylistId.current = listId; // Keep ref in sync for other components
-                        goToVideo(item.id, false, '', listId);
-                      }}
-                      showRemove
-                      onRemove={() => removeFromHistory(item.id)}
-                    />
+                  .map((item, index) => (
+                    <div 
+                      key={item.id} 
+                      className="group/card animate-fade-in relative transition-all duration-500 hover:-translate-y-1 hover:z-10"
+                      style={{ animationDelay: `${index * 40}ms` }}
+                    >
+                      <VideoCard
+                        video={item}
+                        compact
+                        onPlay={() => {
+                          addToHistory(item);
+                          const listId = item.playlistId || null;
+                          lastActivePlaylistId.current = listId; // Keep ref in sync for other components
+                          goToVideo(item.id, false, '', listId);
+                        }}
+                        showRemove
+                        onRemove={() => removeFromHistory(item.id)}
+                      />
+                    </div>
                   ))}
               </div>
             </section>
